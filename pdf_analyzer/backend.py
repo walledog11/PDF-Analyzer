@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-open_ai_api_key = os.getenv("OPEN_AI_KEY")
+open_ai_api_key = st.secrets("OPEN_AI_KEY")
 
 def file_reader(uploaded_file):
     if uploaded_file: 
