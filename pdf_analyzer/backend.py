@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-open_ai_api_key = st.secrets("OPEN_AI_KEY")
+open_ai_api_key = st.secrets["OPEN_AI_KEY"]
 
 def file_reader(uploaded_file):
     if uploaded_file: 
@@ -46,7 +46,7 @@ def doc_analysis(text, user_input, user_choice):
                     f"2. Use emojis **only in headings or subheadings** to make the structure more readable "
                     f"(e.g., '📄 Summary', '🔍 Key Insights', '💡 Answer').\n"
                     f"3. Keep the rest of the text clean and professional — no unnecessary emojis.\n"
-                    f"4. Structure responses with short sections, bullet points, and clear formatting."
+                    f"4. Structure responses with short sections, bullet points, and clear formatting.\n"
                     f"5. When asked objective questions, present the answer first and then explain how you came to that conclusion by using facts and explanations."
                 )
             },  
