@@ -46,16 +46,37 @@ with col1:
 
 with col2:
     if uploaded_file and 'pdf_text' in ss:
-        summarize = st.button("Summarize Document", use_container_width=True)
+        with st.container():
+            gen_summarize = st.button("General Summary", use_container_width=True)
+            complex_summarize = st.button("Complex Summary", use_container_width=True)
+            simple_summarize = st.button("Simplest Language Summary", use_container_width=True)
 
         with st.form("Analysis"):
             user_input = st.text_input('What questions do you have about this document?')
             submitted = st.form_submit_button("Submit", use_container_width=True)
 
-        if summarize:
+        if gen_summarize:
             with st.spinner("Summarizing document..."):
                 try:
                     summary = doc_analysis(ss.pdf_text, user_input, user_choice='summary')
+                    with st.container(height=1000):
+                        st.markdown(summary)
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
+
+        if complex_summarize:
+            with st.spinner("Summarizing document..."):
+                try:
+                    summary = doc_analysis(ss.pdf_text, user_input, user_choice='complex_summary')
+                    with st.container(height=1000):
+                        st.markdown(summary)
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
+
+        if simple_summarize:
+            with st.spinner("Summarizing document..."):
+                try:
+                    summary = doc_analysis(ss.pdf_text, user_input, user_choice='simple_summary')
                     with st.container(height=1000):
                         st.markdown(summary)
                 except Exception as e:

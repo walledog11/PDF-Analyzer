@@ -6,7 +6,10 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-open_ai_api_key = st.secrets["OPEN_AI_KEY"]
+try:
+    open_ai_api_key = st.secrets["OPEN_AI_KEY"]
+except:
+    open_ai_api_key = os.getenv('OPEN_AI_KEY')
 
 def file_reader(uploaded_file):
     if uploaded_file: 
@@ -29,6 +32,10 @@ def doc_analysis(text, user_input, user_choice):
 
     if user_choice.lower() == 'summary':
         user_prompt = 'summarize this entire document'
+    elif user_choice.lower() == 'complex_summary':
+        user_prompt = 'Summarize this entire document using complex language. Treat me as if I am an expert in the field that the document is about.'
+    elif user_choice.lower() == 'simple_summary':
+        user_prompt = 'Summarize this entire document and explain it in terms that a 5 year old would understand'
     elif user_choice.lower() == 'analyze':
         user_prompt = user_input
 
