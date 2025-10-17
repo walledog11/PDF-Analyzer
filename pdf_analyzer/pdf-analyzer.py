@@ -58,7 +58,7 @@ with col2:
         if gen_summarize:
             with st.spinner("Summarizing document..."):
                 try:
-                    summary = doc_analysis(ss.pdf_text, user_input, user_choice='summary')
+                    summary = doc_analysis(ss.pdf_text, "", user_input, user_choice='summary')
                     with st.container(height=1000):
                         st.markdown(summary)
                 except Exception as e:
@@ -67,7 +67,7 @@ with col2:
         if complex_summarize:
             with st.spinner("Summarizing document..."):
                 try:
-                    summary = doc_analysis(ss.pdf_text, user_input, user_choice='complex_summary')
+                    summary = doc_analysis(ss.pdf_text, "", user_input, user_choice='complex_summary')
                     with st.container(height=1000):
                         st.markdown(summary)
                 except Exception as e:
@@ -76,7 +76,7 @@ with col2:
         if simple_summarize:
             with st.spinner("Summarizing document..."):
                 try:
-                    summary = doc_analysis(ss.pdf_text, user_input, user_choice='simple_summary')
+                    summary = doc_analysis(ss.pdf_text, "", user_input, user_choice='simple_summary')
                     with st.container(height=1000):
                         st.markdown(summary)
                 except Exception as e:

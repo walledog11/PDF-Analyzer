@@ -31,11 +31,11 @@ def doc_analysis(text, user_input, user_choice):
     client = OpenAI(api_key=open_ai_api_key)
 
     if user_choice.lower() == 'summary':
-        user_prompt = 'summarize this entire document'
+        user_prompt = 'Provide a comprehensive summary of this document'
     elif user_choice.lower() == 'complex_summary':
-        user_prompt = 'Summarize this entire document using complex language. Treat me as if I am an expert in the field that the document is about.'
+        user_prompt = 'Provide a detailed, complex analysis and summary of this document with technical insights and deep analysis'
     elif user_choice.lower() == 'simple_summary':
-        user_prompt = 'Summarize this entire document and explain it in terms that a 5 year old would understand'
+        user_prompt = 'Provide a very simple summary of this document using easy-to-understand language, as if explaining to a beginner'
     elif user_choice.lower() == 'analyze':
         user_prompt = user_input
 
