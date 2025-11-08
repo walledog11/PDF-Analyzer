@@ -3,3 +3,10 @@ pymupdf
 openai
 python-dotenv
 streamlit-pdf-viewer
+chromadb
+langchain
+langchain-openai
+langchain-community
+langchain-text-splitters
+sentence-transformers
+tiktoken
