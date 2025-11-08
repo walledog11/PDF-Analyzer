@@ -5,9 +5,17 @@ from openai import OpenAI
 from streamlit_pdf_viewer import pdf_viewer
 from backend import file_reader, doc_analysis
 from time import sleep
+from datetime import datetime
 
+# Initialize session state variables
 if 'pdf_ref' not in ss:
     ss.pdf_ref = None
+
+if 'pdf_library' not in ss:
+    ss.pdf_library = []
+
+if 'current_pdf_name' not in ss:
+    ss.current_pdf_name = None
 
 st.set_page_config(
     page_title="PDF Analyzer",
@@ -17,6 +25,34 @@ st.set_page_config(
 st.title('PDF Analyzer')
 st.markdown('Upload any PDF and get a summary')
 
+# Sidebar - Library
+with st.sidebar:
+    st.header("📚 PDF Library")
+    st.markdown("---")
+    
+    # Display saved PDFs
+    if ss.pdf_library:
+        st.subheader("Saved PDFs")
+        for idx, pdf_item in enumerate(ss.pdf_library):
+            col_a, col_b = st.columns([3, 1])
+            with col_a:
+                if st.button(f"📄 {pdf_item['name']}", key=f"load_{idx}", use_container_width=True):
+                    # Load the selected PDF from library
+                    ss.pdf_ref = pdf_item['name']
+                    ss.binary_data = pdf_item['binary_data']
+                    ss.pdf_text = pdf_item['text']
+                    ss.current_pdf_name = pdf_item['name']
+                    st.rerun()
+            with col_b:
+                if st.button("🗑️", key=f"delete_{idx}"):
+                    ss.pdf_library.pop(idx)
+                    st.rerun()
+        
+        st.markdown("---")
+        st.caption(f"Total PDFs: {len(ss.pdf_library)}")
+    else:
+        st.info("No PDFs saved yet. Upload and save a PDF to build your library!")
+
 uploaded_file = st.file_uploader("Upload PDF file", type=['pdf'], key='pdf')
 
 col1, col2 = st.columns([2, 1])
@@ -24,6 +60,7 @@ col1, col2 = st.columns([2, 1])
 with col1:
     if uploaded_file:
         ss.pdf_ref = uploaded_file
+        ss.current_pdf_name = uploaded_file.name
 
         with st.spinner('Processing PDF...'):
             try: 
@@ -34,7 +71,25 @@ with col1:
             except Exception as e:
                 st.error(e)
 
-    if uploaded_file and 'binary_data' in ss:
+    if ss.pdf_ref and 'binary_data' in ss:
+        # Show save to library button
+        if ss.current_pdf_name:
+            # Check if PDF is already in library
+            is_in_library = any(pdf['name'] == ss.current_pdf_name for pdf in ss.pdf_library)
+            
+            if not is_in_library:
+                if st.button("💾 Save to Library", use_container_width=True):
+                    ss.pdf_library.append({
+                        'name': ss.current_pdf_name,
+                        'binary_data': ss.binary_data,
+                        'text': ss.pdf_text,
+                        'upload_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
+                    st.success(f"✅ '{ss.current_pdf_name}' saved to library!")
+                    st.rerun()
+            else:
+                st.info(f"📚 '{ss.current_pdf_name}' is already in your library")
+        
         pdf_viewer(input=ss.binary_data, 
                 width=700,
                 height=1000,
@@ -45,7 +100,7 @@ with col1:
         st.info("Please upload a valid file")
 
 with col2:
-    if uploaded_file and 'pdf_text' in ss:
+    if ss.pdf_ref and 'pdf_text' in ss:
         with st.container():
             gen_summarize = st.button("General Summary", use_container_width=True)
             complex_summarize = st.button("Complex Summary", use_container_width=True)
