@@ -41,18 +41,25 @@ def create_chunks(text, chunk_size=1000, chunk_overlap=200):
     chunks = text_splitter.split_text(text)
     return chunks
 
-def get_embeddings(texts):
-    """Get embeddings from OpenAI for a list of texts"""
+def get_embeddings(texts, batch_size=100):
+    """Get embeddings from OpenAI for a list of texts with batching"""
     client = OpenAI(api_key=open_ai_api_key)
     
-    # OpenAI API accepts list of texts
-    response = client.embeddings.create(
-        input=texts,
-        model="text-embedding-3-small"
-    )
+    all_embeddings = []
     
-    embeddings = [item.embedding for item in response.data]
-    return np.array(embeddings, dtype='float32')
+    # Process in batches to avoid token limits
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i + batch_size]
+        
+        response = client.embeddings.create(
+            input=batch,
+            model="text-embedding-3-small"
+        )
+        
+        batch_embeddings = [item.embedding for item in response.data]
+        all_embeddings.extend(batch_embeddings)
+    
+    return np.array(all_embeddings, dtype='float32')
 
 def create_vector_store(pdf_name, text):
     """Create FAISS vector store for a PDF"""
