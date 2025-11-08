@@ -4,25 +4,15 @@ from streamlit_pdf_viewer import pdf_viewer
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
-import chromadb
-from chromadb.utils import embedding_functions
+import faiss
+import numpy as np
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-import hashlib
 
 load_dotenv()
 try:
     open_ai_api_key = st.secrets["OPEN_AI_KEY"]
 except:
     open_ai_api_key = os.getenv('OPEN_AI_KEY')
-
-# Initialize ChromaDB client
-chroma_client = chromadb.Client()
-
-# Initialize embedding function using OpenAI
-openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=open_ai_api_key,
-    model_name="text-embedding-3-small"
-)
 
 def file_reader(uploaded_file):
     if uploaded_file: 
@@ -51,55 +41,62 @@ def create_chunks(text, chunk_size=1000, chunk_overlap=200):
     chunks = text_splitter.split_text(text)
     return chunks
 
-def create_vector_store(pdf_name, text):
-    """Create or update vector store for a PDF"""
-    # Generate unique collection name based on PDF name
-    collection_name = hashlib.md5(pdf_name.encode()).hexdigest()[:20]
+def get_embeddings(texts):
+    """Get embeddings from OpenAI for a list of texts"""
+    client = OpenAI(api_key=open_ai_api_key)
     
-    # Delete collection if it exists
-    try:
-        chroma_client.delete_collection(name=collection_name)
-    except:
-        pass
-    
-    # Create new collection
-    collection = chroma_client.create_collection(
-        name=collection_name,
-        embedding_function=openai_ef
+    # OpenAI API accepts list of texts
+    response = client.embeddings.create(
+        input=texts,
+        model="text-embedding-3-small"
     )
     
+    embeddings = [item.embedding for item in response.data]
+    return np.array(embeddings, dtype='float32')
+
+def create_vector_store(pdf_name, text):
+    """Create FAISS vector store for a PDF"""
     # Create chunks
     chunks = create_chunks(text)
     
-    # Add chunks to collection
-    ids = [f"chunk_{i}" for i in range(len(chunks))]
-    collection.add(
-        documents=chunks,
-        ids=ids
-    )
+    # Get embeddings for all chunks
+    embeddings = get_embeddings(chunks)
     
-    return collection_name, len(chunks)
+    # Create FAISS index
+    dimension = embeddings.shape[1]  # Dimension of embeddings (1536 for text-embedding-3-small)
+    index = faiss.IndexFlatL2(dimension)  # L2 distance for similarity
+    index.add(embeddings)
+    
+    # Return index, chunks, and metadata
+    vector_data = {
+        'index': index,
+        'chunks': chunks,
+        'embeddings': embeddings
+    }
+    
+    return vector_data, len(chunks)
 
-def retrieve_relevant_chunks(collection_name, query, n_results=5):
-    """Retrieve relevant chunks based on query"""
+def retrieve_relevant_chunks(vector_data, query, n_results=5):
+    """Retrieve relevant chunks based on query using FAISS"""
     try:
-        collection = chroma_client.get_collection(
-            name=collection_name,
-            embedding_function=openai_ef
-        )
+        if not vector_data or 'index' not in vector_data:
+            return []
         
-        results = collection.query(
-            query_texts=[query],
-            n_results=n_results
-        )
+        # Get embedding for the query
+        query_embedding = get_embeddings([query])
         
-        # Return the documents (chunks)
-        return results['documents'][0] if results['documents'] else []
+        # Search FAISS index
+        distances, indices = vector_data['index'].search(query_embedding, n_results)
+        
+        # Get the corresponding chunks
+        relevant_chunks = [vector_data['chunks'][i] for i in indices[0] if i < len(vector_data['chunks'])]
+        
+        return relevant_chunks
     except Exception as e:
         print(f"Error retrieving chunks: {e}")
         return []
 
-def doc_analysis(text, user_input, user_choice, collection_name=None, use_rag=True):
+def doc_analysis(text, user_input, user_choice, vector_data=None, use_rag=True):
     client = OpenAI(api_key=open_ai_api_key)
 
     if user_choice.lower() == 'summary':
@@ -116,9 +113,9 @@ def doc_analysis(text, user_input, user_choice, collection_name=None, use_rag=Tr
         use_rag = True  # Use RAG for specific questions
     
     # Determine which text to use
-    if use_rag and collection_name:
+    if use_rag and vector_data:
         # Retrieve relevant chunks
-        relevant_chunks = retrieve_relevant_chunks(collection_name, user_prompt, n_results=5)
+        relevant_chunks = retrieve_relevant_chunks(vector_data, user_prompt, n_results=5)
         if relevant_chunks:
             context_text = "\n\n".join(relevant_chunks)
             context_info = f"Retrieved {len(relevant_chunks)} most relevant sections from the document."

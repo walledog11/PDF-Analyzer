@@ -17,8 +17,8 @@ if 'pdf_library' not in ss:
 if 'current_pdf_name' not in ss:
     ss.current_pdf_name = None
 
-if 'collection_name' not in ss:
-    ss.collection_name = None
+if 'vector_data' not in ss:
+    ss.vector_data = None
 
 st.set_page_config(
     page_title="PDF Analyzer",
@@ -45,7 +45,7 @@ with st.sidebar:
                     ss.binary_data = pdf_item['binary_data']
                     ss.pdf_text = pdf_item['text']
                     ss.current_pdf_name = pdf_item['name']
-                    ss.collection_name = pdf_item.get('collection_name')
+                    ss.vector_data = pdf_item.get('vector_data')
                     st.rerun()
             with col_b:
                 if st.button("🗑️", key=f"delete_{idx}"):
@@ -78,12 +78,12 @@ with col1:
         # Create vector embeddings
         with st.spinner('Creating vector embeddings for semantic search...'):
             try:
-                collection_name, num_chunks = create_vector_store(ss.current_pdf_name, ss.pdf_text)
-                ss.collection_name = collection_name
+                vector_data, num_chunks = create_vector_store(ss.current_pdf_name, ss.pdf_text)
+                ss.vector_data = vector_data
                 st.success(f"✅ Created {num_chunks} chunks with embeddings for efficient retrieval")
             except Exception as e:
                 st.error(f"Error creating embeddings: {e}")
-                ss.collection_name = None
+                ss.vector_data = None
 
     if ss.pdf_ref and 'binary_data' in ss:
         # Show save to library button
@@ -97,7 +97,7 @@ with col1:
                         'name': ss.current_pdf_name,
                         'binary_data': ss.binary_data,
                         'text': ss.pdf_text,
-                        'collection_name': ss.collection_name,
+                        'vector_data': ss.vector_data,
                         'upload_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     })
                     st.success(f"✅ '{ss.current_pdf_name}' saved to library!")
@@ -128,7 +128,7 @@ with col2:
         if gen_summarize:
             with st.spinner("Summarizing document..."):
                 try:
-                    summary = doc_analysis(ss.pdf_text, "", user_choice='summary', collection_name=ss.collection_name)
+                    summary = doc_analysis(ss.pdf_text, "", user_choice='summary', vector_data=ss.vector_data)
                     with st.container(height=1000):
                         st.markdown(summary)
                 except Exception as e:
@@ -137,7 +137,7 @@ with col2:
         if complex_summarize:
             with st.spinner("Summarizing document..."):
                 try:
-                    summary = doc_analysis(ss.pdf_text, "", user_choice='complex_summary', collection_name=ss.collection_name)
+                    summary = doc_analysis(ss.pdf_text, "", user_choice='complex_summary', vector_data=ss.vector_data)
                     with st.container(height=1000):
                         st.markdown(summary)
                 except Exception as e:
@@ -146,7 +146,7 @@ with col2:
         if simple_summarize:
             with st.spinner("Summarizing document..."):
                 try:
-                    summary = doc_analysis(ss.pdf_text, "", user_choice='simple_summary', collection_name=ss.collection_name)
+                    summary = doc_analysis(ss.pdf_text, "", user_choice='simple_summary', vector_data=ss.vector_data)
                     with st.container(height=1000):
                         st.markdown(summary)
                 except Exception as e:
@@ -155,7 +155,7 @@ with col2:
         if submitted and user_input:  
             with st.spinner("Analyzing document with RAG (retrieving relevant sections)..."):
                 try: 
-                    analysis = doc_analysis(ss.pdf_text, user_input, user_choice='analyze', collection_name=ss.collection_name)
+                    analysis = doc_analysis(ss.pdf_text, user_input, user_choice='analyze', vector_data=ss.vector_data)
                     with st.container(height=1000):
                         st.markdown(analysis)
                 except Exception as e:

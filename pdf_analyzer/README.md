@@ -1,14 +1,26 @@
 # PDF Analyzer
 
-A Streamlit web application that allows users to upload PDF files and analyze them using OpenAI's GPT models.
+A Streamlit web application that allows users to upload PDF files and analyze them using OpenAI's GPT models with RAG (Retrieval Augmented Generation) for efficient document processing.
 
 ## Features
 
-- Upload and view PDF files
-- Extract text from PDFs
-- AI-powered document summarization
-- Ask questions about document content
-- Real-time progress tracking
+- 📄 Upload and view PDF files
+- 🔍 Extract text from PDFs with intelligent chunking
+- 🤖 AI-powered document summarization (general, complex, or simple)
+- 💬 Ask specific questions about document content
+- 📚 Sidebar library to save and manage multiple PDFs
+- 🎯 **RAG Implementation**: Vector embeddings with FAISS for semantic search
+- ⚡ Efficient context retrieval - only relevant sections sent to AI
+- ☁️ Streamlit Cloud compatible (uses session-based storage)
+
+## RAG Architecture
+
+The app uses **FAISS (Facebook AI Similarity Search)** for vector storage:
+- **Text Chunking**: Documents split into 1000-character chunks with 200-char overlap
+- **Embeddings**: OpenAI's `text-embedding-3-small` model
+- **Storage**: In-memory FAISS indexes stored in Streamlit session state
+- **Retrieval**: Top 5 most relevant chunks retrieved for each query
+- **Cost Savings**: Only sends relevant context to GPT, reducing token usage
 
 ## Installation
 
