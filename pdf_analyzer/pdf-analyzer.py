@@ -30,7 +30,7 @@ st.markdown('Upload any PDF and get a summary')
 
 # Sidebar - Library
 with st.sidebar:
-    st.header("📚 PDF Library")
+    st.header("📚 Library")
     st.markdown("---")
     
     # Display saved PDFs
@@ -66,24 +66,27 @@ with col1:
         ss.pdf_ref = uploaded_file
         ss.current_pdf_name = uploaded_file.name
 
-        with st.spinner('Processing PDF...'):
-            try: 
-                binary_data, text = file_reader(uploaded_file)
-                ss.pdf_text = text
-                ss.binary_data = binary_data
-                
-            except Exception as e:
-                st.error(e)
-        
-        # Create vector embeddings
-        with st.spinner('Creating vector embeddings for semantic search...'):
-            try:
-                vector_data, num_chunks = create_vector_store(ss.current_pdf_name, ss.pdf_text)
-                ss.vector_data = vector_data
-                st.success(f"✅ Created {num_chunks} chunks with embeddings for efficient retrieval")
-            except Exception as e:
-                st.error(f"Error creating embeddings: {e}")
-                ss.vector_data = None
+        # Only process if it's a new file or not yet processed
+        if 'pdf_text' not in ss or ss.get('last_processed_file') != uploaded_file.name:
+            with st.spinner('Processing PDF...'):
+                try: 
+                    binary_data, text = file_reader(uploaded_file)
+                    ss.pdf_text = text
+                    ss.binary_data = binary_data
+                    ss.last_processed_file = uploaded_file.name
+                    
+                except Exception as e:
+                    st.error(e)
+            
+            # Create vector embeddings only once per file
+            with st.spinner('Creating vector embeddings for semantic search...'):
+                try:
+                    vector_data, num_chunks = create_vector_store(ss.current_pdf_name, ss.pdf_text)
+                    ss.vector_data = vector_data
+                    st.success(f"✅ Created {num_chunks} chunks with embeddings for efficient retrieval")
+                except Exception as e:
+                    st.error(f"Error creating embeddings: {e}")
+                    ss.vector_data = None
 
     if ss.pdf_ref and 'binary_data' in ss:
         # Show save to library button

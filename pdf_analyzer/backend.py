@@ -17,14 +17,11 @@ except:
 def file_reader(uploaded_file):
     if uploaded_file: 
         binary_data = uploaded_file.getvalue()
-
         doc = pymupdf.open(stream=binary_data, filetype='pdf')
         text = ""
         for page in doc:
             text += page.get_text()
-
         doc.close()
-
         return binary_data, text
     
     else:
